@@ -261,7 +261,7 @@ int triTable[256][16] =
 {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
-Chunk::Chunk( World * world, glm::ivec3 chunk_pos ) : world(world), chunk_pos(chunk_pos) {}
+Chunk::Chunk( World * world, glm::ivec3 chunk_pos ) : voxels( {0} ), world(world), chunk_pos(chunk_pos) {}
 
 void Chunk::set_voxel( glm::ivec3 position, float value ) {
     get_voxel(position) = value;
@@ -311,7 +311,6 @@ void Chunk::cube_march() {
                     triangle[2] = vertlist[triTable[cubeindex][i]];
                     triangles.push_back( triangle );
                 }
-                
             }
         }
     }
@@ -335,9 +334,9 @@ float & Chunk::get_voxel( glm::ivec3 position ) {
 }
 
 World::World() {
-    for ( int x=-64; x<=64; ++x ) {
-        for ( int y=-64; y<=64; ++y ) {
-            for ( int z=-64; z<=64; ++z ) {
+    for ( int x=-63; x<=63; ++x ) {
+        for ( int y=-63; y<=63; ++y ) {
+            for ( int z=-63; z<=63; ++z ) {
                 this->set_voxel( {x,y,z}, 32.0/glm::length( glm::vec3{x,y,z} )-1 );
             }
         }
@@ -359,9 +358,10 @@ void World::set_voxel( glm::ivec3 position, float value ) {
 
 std::optional<float> World::get_voxel( glm::ivec3 position ) {
     auto local_pos = calc_chunk_coordinates( position );
-    if ( chunks.find(local_pos.first) == chunks.end() )
+    auto it = chunks.find(local_pos.first);
+    if ( it == chunks.end() )
         return {};
-    return chunks.at(local_pos.first).get_voxel(local_pos.second);
+    return it->second.get_voxel(local_pos.second);
 }
 
 std::pair<glm::ivec3, glm::ivec3> World::calc_chunk_coordinates( glm::ivec3 world_coordinates ) {
