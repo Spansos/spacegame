@@ -261,28 +261,37 @@ int triTable[256][16] =
 {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
-Chunk::Chunk( World * world, glm::ivec3 chunk_pos ) : voxels( {0} ), world(world), chunk_pos(chunk_pos) {}
+Chunk::Chunk( World * world, glm::ivec3 chunk_pos ) : _voxels( {0} ), _world(world), _chunk_pos(chunk_pos) {}
 
 void Chunk::set_voxel( glm::ivec3 position, float value ) {
     get_voxel(position) = value;
 }
 
 void Chunk::cube_march() {
-    triangles.clear();
+    _triangles.clear();
     for ( int x=0; x<CHUNK_SIZE; ++x ) {
         for ( int y=0; y<CHUNK_SIZE; ++y ) {
             for ( int z=0; z<CHUNK_SIZE; ++z ) {
                 // make cube index
-                glm::ivec3 pos = chunk_pos * CHUNK_SIZE + glm::ivec3{x,y,z};
+                glm::ivec3 pos = _chunk_pos * CHUNK_SIZE + glm::ivec3{x,y,z};
+                std::array<glm::ivec3, 8> voxels = {
+                    pos+glm::ivec3{0,0,0},
+                    pos+glm::ivec3{1,0,0},
+                    pos+glm::ivec3{1,0,1},
+                    pos+glm::ivec3{0,0,1},
+                    pos+glm::ivec3{0,1,0},
+                    pos+glm::ivec3{1,1,0},
+                    pos+glm::ivec3{1,1,1},
+                    pos+glm::ivec3{0,1,1}
+                };
+                std::array<float, 8> values;
+                for ( int i=0; i<8; ++i ) 
+                    values[i] = _world->get_voxel( voxels[i] ).value_or( 0 );
                 int cubeindex = 0;
-                if (world->get_voxel(pos+glm::ivec3{0,0,0}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 1;
-                if (world->get_voxel(pos+glm::ivec3{1,0,0}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 2;
-                if (world->get_voxel(pos+glm::ivec3{1,0,1}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 4;
-                if (world->get_voxel(pos+glm::ivec3{0,0,1}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 8;
-                if (world->get_voxel(pos+glm::ivec3{0,1,0}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 16;
-                if (world->get_voxel(pos+glm::ivec3{1,1,0}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 32;
-                if (world->get_voxel(pos+glm::ivec3{1,1,1}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 64;
-                if (world->get_voxel(pos+glm::ivec3{0,1,1}).value_or(ISO_LEVEL) < ISO_LEVEL) cubeindex |= 128;
+                for ( int i=7; i>=0; --i ) {
+                    cubeindex |= values[i] > ISO_LEVEL;
+                    cubeindex <<= 1;
+                }
 
                 // // get edges mask
                 // int edges = edgeTable[cubeindex];
@@ -290,26 +299,26 @@ void Chunk::cube_march() {
                 //     continue;
 
                 std::array<glm::vec3, 12> vertlist = {
-                    glm::vec3{x+.5,y,z},
-                    glm::vec3{x+1,y,z+.5},
-                    glm::vec3{x+.5,y,z+1},
-                    glm::vec3{x,y,z+.5},
-                    glm::vec3{x+.5,y+1,z},
-                    glm::vec3{x+1,y+1,z+.5},
-                    glm::vec3{x+.5,y+1,z+1},
-                    glm::vec3{x,y+1,z+.5},
-                    glm::vec3{x,y+.5,z},
-                    glm::vec3{x+1,y+.5,z},
-                    glm::vec3{x+1,y+.5,z+1},
-                    glm::vec3{x,y+.5,z+1}
+                    /*glm::mix(*/glm::vec3{x+.5,y   ,z   },
+                    /*glm::mix(*/glm::vec3{x+1 ,y   ,z+.5},
+                    /*glm::mix(*/glm::vec3{x+.5,y   ,z+1 },
+                    /*glm::mix(*/glm::vec3{x   ,y   ,z+.5},
+                    /*glm::mix(*/glm::vec3{x+.5,y+1 ,z   },
+                    /*glm::mix(*/glm::vec3{x+1 ,y+1 ,z+.5},
+                    /*glm::mix(*/glm::vec3{x+.5,y+1 ,z+1 },
+                    /*glm::mix(*/glm::vec3{x   ,y+1 ,z+.5},
+                    /*glm::mix(*/glm::vec3{x   ,y+.5,z   },
+                    /*glm::mix(*/glm::vec3{x+1 ,y+.5,z   },
+                    /*glm::mix(*/glm::vec3{x+1 ,y+.5,z+1 },
+                    /*glm::mix(*/glm::vec3{x   ,y+.5,z+1 }
                 };
 
                 for ( int i=0;triTable[cubeindex][i]!=-1;i+=3 ) {
                     Triangle triangle;
-                    triangle[0] = vertlist[triTable[cubeindex][i+2]];
+                    triangle[0] = vertlist[triTable[cubeindex][i]];
                     triangle[1] = vertlist[triTable[cubeindex][i+1]];
-                    triangle[2] = vertlist[triTable[cubeindex][i]];
-                    triangles.push_back( triangle );
+                    triangle[2] = vertlist[triTable[cubeindex][i+2]];
+                    _triangles.push_back( triangle );
                 }
             }
         }
@@ -318,9 +327,9 @@ void Chunk::cube_march() {
 
 Mesh Chunk::mesh() {
     Mesh mesh;
-    auto begin = reinterpret_cast<glm::vec3*>(triangles.data());
-    mesh.positions.insert( mesh.positions.end(), begin, begin+triangles.size()*3 );
-    for ( auto t : triangles ) {
+    auto begin = reinterpret_cast<glm::vec3*>(_triangles.data());
+    mesh.positions.insert( mesh.positions.end(), begin, begin+_triangles.size()*3 );
+    for ( auto t : _triangles ) {
         for ( int i=0; i<3; i++ ) {
             mesh.colors.push_back( { .9, .2, .3 } );
             mesh.normals.push_back( glm::triangleNormal( t[0], t[1], t[2] ) );
@@ -330,7 +339,7 @@ Mesh Chunk::mesh() {
 }
 
 float & Chunk::get_voxel( glm::ivec3 position ) {
-    return voxels[ position.x + position.y*CHUNK_SIZE + position.z*CHUNK_SIZE*CHUNK_SIZE ];
+    return _voxels[ position.x + position.y*CHUNK_SIZE + position.z*CHUNK_SIZE*CHUNK_SIZE ];
 }
 
 World::World() {

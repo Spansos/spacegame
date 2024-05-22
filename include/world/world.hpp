@@ -25,10 +25,10 @@ public:
     Mesh mesh();
 // private:
     float & get_voxel( glm::ivec3 position );
-    std::array<float, CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE> voxels;
-    std::vector<Triangle> triangles;
-    World * world;
-    glm::ivec3 chunk_pos;
+    std::array<float, CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE> _voxels;
+    std::vector<Triangle> _triangles;
+    World * _world;
+    glm::ivec3 _chunk_pos;
 };
 
 class World {
