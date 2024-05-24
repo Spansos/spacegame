@@ -12,7 +12,7 @@
 
 typedef std::array<glm::vec3, 3> Triangle;
 
-const int CHUNK_SIZE = 16;
+const int CHUNK_SIZE = 8;
 const float ISO_LEVEL = 0;
 
 class World;
@@ -36,6 +36,7 @@ public:
     World();
     void set_voxel( glm::ivec3 position, float value );
     std::optional<float> get_voxel( glm::ivec3 position );
+    Chunk * get_chunk( glm::ivec3 chunk_position );
     std::pair<glm::ivec3, glm::ivec3> calc_chunk_coordinates( glm::ivec3 world_coordinates );
     void render( Window & window, Renderer & renderer, const Camera & camera );
 private:

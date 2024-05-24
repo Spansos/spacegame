@@ -1,5 +1,5 @@
 CC     := g++
-CFLAGS := -g -Wall -Wextra -Wpedantic -Werror -Og -Iinclude
+CFLAGS := -g -Wall -Wextra -Wpedantic -Werror -O3 -Iinclude
 
 # cpp and header files from own project
 CPP_FILES := $(wildcard src/*.cpp) $(wildcard src/*/*.cpp)
