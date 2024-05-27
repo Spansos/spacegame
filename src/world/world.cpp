@@ -1,7 +1,9 @@
 #include "world/world.hpp"
 
-#include <glm/gtx/transform.hpp>
+#include <limits>
+#include <glm/gtx/norm.hpp>
 #include <glm/gtx/normal.hpp>
+#include <glm/gtx/intersect.hpp>
 
 
 Chunk::Chunk( World * world, glm::ivec3 chunk_pos ) : _voxels( {0} ), _world(world), _chunk_pos(chunk_pos) {}
@@ -129,6 +131,25 @@ Mesh Chunk::mesh() {
     return mesh;
 }
 
+std::optional<glm::vec3> Chunk::raycast( glm::vec3 start, glm::vec3 dir ) const {
+    std::pair<glm::vec3, float> result = {{}, std::numeric_limits<float>::infinity()};
+    for ( const auto & triangle : _triangles ) {
+        glm::vec2 bary;
+        float dist;
+        if ( glm::intersectRayTriangle( start, dir, triangle[0], triangle[1], triangle[2], bary, dist ) ) {
+            if ( dist < result.second ) {
+                result.first = bary.x * triangle[0]
+                    + bary.y * triangle[1]
+                    + (1-bary.x-bary.y) * triangle[2];
+                result.second = dist;
+            }
+        }
+    }
+    if ( result.second == std::numeric_limits<float>::infinity() )
+        return {};
+    return result.first;
+}
+
 float & Chunk::get_voxel( glm::ivec3 position ) {
     return _voxels[ position.x + position.y*CHUNK_SIZE + position.z*CHUNK_SIZE*CHUNK_SIZE ];
 }
@@ -141,7 +162,7 @@ World::World() {
             }
         }
     }
-    for ( auto &i : chunks ) {
+    for ( auto &i : _chunks ) {
         i.second.cube_march();
     }
 }
@@ -149,26 +170,28 @@ World::World() {
 void World::set_voxel( glm::ivec3 position, float value ) {
     auto local_pos = calc_chunk_coordinates( position );
 
-    if ( chunks.find(local_pos.first) == chunks.end() ) {
-        chunks.insert( { local_pos.first, Chunk( this, local_pos.first ) } );
+    if ( _chunks.find(local_pos.first) == _chunks.end() ) {
+        _chunks.insert( { local_pos.first, Chunk( this, local_pos.first ) } );
     }
 
-    chunks.at(local_pos.first).set_voxel( local_pos.second, value );
+    _chunks.at(local_pos.first).set_voxel( local_pos.second, value );
 }
 
 std::optional<float> World::get_voxel( glm::ivec3 position ) {
     auto local_pos = calc_chunk_coordinates( position );
-    auto it = chunks.find(local_pos.first);
-    if ( it == chunks.end() )
+    auto it = _chunks.find(local_pos.first);
+    if ( it == _chunks.end() )
         return {};
     return it->second.get_voxel(local_pos.second);
 }
 
-Chunk * World::get_chunk( glm::ivec3 chunk_position ) {
-    auto it = chunks.find( chunk_position );
-    if ( it == chunks.end() )
-        return {};
-    return &it->second;
+Chunk & World::get_chunk( glm::ivec3 chunk_position ) {
+    auto it = _chunks.find( chunk_position );
+    if ( it == _chunks.end() ) {
+        _chunks.insert( {chunk_position, {this, chunk_position}} );
+        return _chunks.at( chunk_position );
+    }
+    return it->second;
 }
 
 std::pair<glm::ivec3, glm::ivec3> World::calc_chunk_coordinates( glm::ivec3 world_coordinates ) {
@@ -178,8 +201,21 @@ std::pair<glm::ivec3, glm::ivec3> World::calc_chunk_coordinates( glm::ivec3 worl
     return { chunk_pos, block_pos };
 }
 
+std::optional<glm::vec3> World::raycast( glm::vec3 start, glm::vec3 dir ) {
+    glm::vec3 result = { std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity() };
+    for ( const auto & pair : _chunks ) {
+        auto r = pair.second.raycast( start, dir );
+        if ( r.has_value() && glm::length2(start-r.value()) < glm::length2(start-result) ) {
+            result = r.value();
+        }
+    }
+    if ( result.x == std::numeric_limits<float>::infinity() )
+        return {};
+    return result;
+}
+
 void World::render( Window & window, Renderer & renderer, const Camera & camera ) {
-    for ( auto &chunk : chunks ) {
+    for ( auto &chunk : _chunks ) {
         renderer.draw( window, chunk.second.mesh(), glm::mat4{1}, camera );
     }
 }

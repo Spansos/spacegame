@@ -13,20 +13,14 @@
 int main() {
     Window window{ {1024, 768}, "Spansos Space Game" };
 
-    // Camera camera{&window};
-    // camera.resized( &window, glm::ivec2{1024, 768} );
-    Player player( window );
-
     Renderer renderer{ "resources/fragment.glsl", "resources/vertex.glsl" };
-
     World world;
-    double last = glfwGetTime();
-    // double frame_time = 1.0/120.0;
+    Player player( window , world);
 
-    glClearColor( .2f, .4f, .7f, .0f );
+    // double last = glfwGetTime();
     do{
-        std::cout <<  1.0/(glfwGetTime()-last) << '\n';
-        last = glfwGetTime();
+        // std::cout <<  1.0/(glfwGetTime()-last) << '\n';
+        // last = glfwGetTime();
 
         glfwPollEvents( );
 

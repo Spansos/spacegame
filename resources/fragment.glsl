@@ -7,6 +7,6 @@ in vec3 color;
 out vec3 out_color;
 
 void main( ) {
-	// out_color = color * (dot(normal,vec3(1,1,1))/3+1)/2;
-	out_color = color * dot(normal,vec3(1,1,1))/3;
+	out_color = color * (dot(normal,vec3(1,1,1))/3+1)/2;
+	// out_color = color * dot(normal,vec3(1,1,1))/3;
 }

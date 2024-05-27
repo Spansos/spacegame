@@ -23,6 +23,7 @@ public:
     void set_voxel( glm::ivec3 position, float value );
     void cube_march();
     Mesh mesh();
+    std::optional<glm::vec3> raycast( glm::vec3 start, glm::vec3 dir ) const;
 // private:
     float & get_voxel( glm::ivec3 position );
     std::array<float, CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE> _voxels;
@@ -36,9 +37,10 @@ public:
     World();
     void set_voxel( glm::ivec3 position, float value );
     std::optional<float> get_voxel( glm::ivec3 position );
-    Chunk * get_chunk( glm::ivec3 chunk_position );
+    Chunk & get_chunk( glm::ivec3 chunk_position );
     std::pair<glm::ivec3, glm::ivec3> calc_chunk_coordinates( glm::ivec3 world_coordinates );
+    std::optional<glm::vec3> raycast( glm::vec3 start, glm::vec3 dir );
     void render( Window & window, Renderer & renderer, const Camera & camera );
 private:
-    std::unordered_map<glm::ivec3, Chunk> chunks;
+    std::unordered_map<glm::ivec3, Chunk> _chunks;
 };
