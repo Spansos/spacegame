@@ -134,10 +134,10 @@ float & Chunk::get_voxel( glm::ivec3 position ) {
 }
 
 World::World() {
-    for ( int x=-42; x<=42; ++x ) {
-        for ( int y=-42; y<=42; ++y ) {
-            for ( int z=-42; z<=42; ++z ) {
-                this->set_voxel( {x,y,z}, 32.0/glm::length( glm::vec3{x,y,z} )-1 );
+    for ( int x=-20; x<=20; ++x ) {
+        for ( int y=-20; y<=20; ++y ) {
+            for ( int z=-20; z<=20; ++z ) {
+                this->set_voxel( {x,y,z}, 16.0/glm::length( glm::vec3{x,y,z} )-1 );
             }
         }
     }

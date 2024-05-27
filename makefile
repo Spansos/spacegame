@@ -1,4 +1,4 @@
-CC     := g++
+CC     := g++ -std=c++20
 CFLAGS := -g -Wall -Wextra -Wpedantic -Werror -O3 -Iinclude
 
 # cpp and header files from own project

@@ -60,7 +60,7 @@ void Renderer::draw( Window & window, const Mesh & mesh, glm::mat4 model_mat, co
     glUseProgram( _program_id );
 
     // uniforms
-    glUniformMatrix4fv( _mvp_id, 1, GL_FALSE, &camera.calcMvp(model_mat)[0][0] );
+    glUniformMatrix4fv( _mvp_id, 1, GL_FALSE, &camera.calc_mvp(model_mat)[0][0] );
 
     // enable attrib arrays
     glEnableVertexAttribArray(0);

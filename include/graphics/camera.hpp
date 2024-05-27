@@ -1,26 +1,24 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "graphics/window.hpp"
-
-class Camera : WindowEventListener {
+class Camera {
 public:
-    Camera( Window * window );
-    void do_input_shit();
-    glm::mat4 calcMvp( glm::mat4 model_matrix ) const;
-    void resized( Window * window, glm::ivec2 size ) override;
-private:
-    Window * _window;
-    glm::vec3 _point_of_intereset = {0.0f, 0.0f, 0.0f};
-    glm::vec3 _position = {30.0f,0.0f,0.0f};
-    glm::vec2 _prev_mouse_pos;
-    float _FoV = 45.0f;
-    float _orbit_speed = .25f;
-    float _pan_speed = .1f;
-    float _zoom_speed = .5f;
-    glm::mat4 _projection;
-    glm::mat4 _view;
+    // position of the camera
+    glm::vec3 position;
+    // a vector describing the direction the camera is facing
+    glm::vec3 direction;
+    // a float describing the roll of the camera, in degrees
+    float roll;
+    // field of view
+    float field_of_view;
+    // aspect ratio of the target window.
+    // should probs be set up to change on a callback with WindowEventListener
+    float aspect_ratio;
+    // near clipping plane. things closer than this arent rendered
+    float near_plane;
+    // near clipping plane. things further than this arent rendered
+    float far_plane;
+    // calculate a mvp for use in rendering
+    glm::mat4 calc_mvp( glm::mat4 model_matrix = glm::mat4{1} ) const;
 };

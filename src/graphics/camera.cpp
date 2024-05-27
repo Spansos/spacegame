@@ -1,62 +1,59 @@
 #include "graphics/camera.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
-#include <iostream>
+glm::mat4 Camera::calc_mvp( glm::mat4 model_matrix ) const {
+    // perspective
+    glm::mat4 mvp = glm::perspective(
+        glm::radians(field_of_view),
+        aspect_ratio,
+        near_plane,
+        far_plane
+    );
 
-Camera::Camera( Window * window ) : _window(window) {
-    window->subscribe( this );
-}
-
-void Camera::do_input_shit() {
-    auto *window = glfwGetCurrentContext( );
-
-    // get mouse movement
-    double xpos, ypos;
-    glfwGetCursorPos( window, &xpos, &ypos );
-    glm::vec2 delta_mouse = glm::vec2{ xpos, ypos } - _prev_mouse_pos;
-    _prev_mouse_pos = { xpos, ypos };
-
+    // view
     // right and up vectors
-    glm::vec3 dpoi = _position - _point_of_intereset;
-    glm::vec3 right = glm::normalize(glm::cross( dpoi, glm::vec3{0, 1, 0} ));
-    glm::vec3 up = glm::normalize(glm::cross( right, dpoi ));
-
-    // orbit view
-    if ( glfwGetMouseButton( window, GLFW_MOUSE_BUTTON_RIGHT ) == GLFW_PRESS ) {
-        float length = glm::length( dpoi );
-        _position += (right*delta_mouse.x + up*delta_mouse.y) * _orbit_speed;
-        _position = _point_of_intereset + glm::normalize( _position-_point_of_intereset )*length;
-    }
-    // zoom
-    if ( glfwGetMouseButton( window, GLFW_MOUSE_BUTTON_MIDDLE ) == GLFW_PRESS ) {
-        glm::vec3 forward = glm::normalize( glm::cross( up, right ) );
-        _position += forward * delta_mouse.y * _zoom_speed;
-    }
-    // pan poi
-    if ( glfwGetMouseButton( window, GLFW_MOUSE_BUTTON_LEFT ) == GLFW_PRESS ) {
-        _point_of_intereset += (right*delta_mouse.x + up*delta_mouse.y) * _pan_speed;
-        _position += (right*delta_mouse.x + up*delta_mouse.y) * _pan_speed;
-    }
+    // // we use glm::vec3{0,1,0} only because 0 degs should be have y be up
+    glm::vec3 right = glm::cross( direction, glm::vec3{0, 1, 0} );
+    glm::vec3 up = glm::normalize(glm::cross( right, direction ));
+    up = glm::rotate( glm::radians(roll), direction ) * glm::vec4{up,0};
+    
 
     // update view matrix
-    _view = glm::lookAt(
-        _position,
-        _point_of_intereset,
+    mvp *= glm::lookAt(
+        position,
+        position+direction,
         up
     );
-}
+    
+    // model
+    mvp *= model_matrix;
 
-glm::mat4 Camera::calcMvp( glm::mat4 model_matrix ) const {
-    return _projection * _view * model_matrix;
-}
+    return mvp;
 
-void Camera::resized( Window * window, glm::ivec2 size ) {
-    (void)window;
-    _projection = glm::perspective(
-        glm::radians(_FoV),
-        (float)size.x/size.y,
-        0.1f,
-        250.0f
-    );
+
+
+    // glm::mat4 mvp = model_matrix;
+    
+    // // right and up vectors
+    // // glm::vec3 up_normal = glm::cross( direction, glm::vec3{0, 1, 0} );
+    // // glm::vec3 up = glm::normalize( glm::cross( up_normal, direction ) );
+
+    // // add view matrix
+    // mvp *= glm::lookAt(
+    //     position,
+    //     position+direction,
+    //     {0,1,0}
+    // );
+
+    // // add projection matrix
+    // mvp *= glm::perspective(
+    //     glm::radians(field_of_view),
+    //     aspect_ratio,
+    //     near_plane,
+    //     far_plane
+    // );
+
+    // return mvp;
 }

@@ -1,35 +1,39 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtx/hash.hpp>
+#include <chrono>
+#include <thread>
+#include <iostream>
 
-#include <unordered_set>
+#include <glm/glm.hpp>
 
 #include "graphics/window.hpp"
-#include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
-#include "graphics/mesh.hpp"
 #include "world/world.hpp"
+#include "player.hpp"
 
-#include <iostream>
 
 int main() {
     Window window{ {1024, 768}, "Spansos Space Game" };
 
-    Camera camera{&window};
-    camera.resized( &window, glm::ivec2{1024, 768} );
+    // Camera camera{&window};
+    // camera.resized( &window, glm::ivec2{1024, 768} );
+    Player player( window );
 
     Renderer renderer{ "resources/fragment.glsl", "resources/vertex.glsl" };
 
     World world;
+    double last = glfwGetTime();
+    // double frame_time = 1.0/120.0;
 
     glClearColor( .2f, .4f, .7f, .0f );
     do{
+        std::cout <<  1.0/(glfwGetTime()-last) << '\n';
+        last = glfwGetTime();
+
         glfwPollEvents( );
 
-        camera.do_input_shit();
+        player.do_input_shit();
+
         window.clear( .4, .5, .6 );
-        world.render( window, renderer, camera );
+        world.render( window, renderer, player.get_camera() );
 
         window.update();
     }
